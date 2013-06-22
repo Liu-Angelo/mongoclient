@@ -5,13 +5,13 @@
 	<parent>
 		<groupId>com.csf</groupId>
 		<artifactId>configuration</artifactId>
-		<version>1.0</version>
+		<version>2.0.0</version>
 		<relativePath>../../configuration/pom.xml</relativePath>
 	</parent>
 
 	<groupId>com.aug3.storage</groupId>
 	<artifactId>mongoclient</artifactId>
-	<version>1.0.6</version>
+	<version>1.0.11</version>
 	<packaging>jar</packaging>
 
 	<name>mongoclient</name>
@@ -29,7 +29,7 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
-			<version>2.9.1</version>
+			<version>2.11.1</version>
 		</dependency>
 	</dependencies>
 
@@ -39,6 +39,10 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>2.3.1</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>

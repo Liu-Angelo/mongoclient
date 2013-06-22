@@ -7,7 +7,8 @@ import java.util.List;
 import com.aug3.storage.mongoclient.config.MongoConfig;
 import com.aug3.storage.mongoclient.exception.BadConfigException;
 import com.mongodb.Mongo;
-import com.mongodb.MongoOptions;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 
@@ -59,7 +60,7 @@ public class MongoFactory {
 
 		List<ServerAddress> seeds = getSeeds();
 
-		MongoOptions options = null;
+		MongoClientOptions options = null;
 
 		if (config.getBooleanProperty("mongo.options.on", false)) {
 			options = initMongoOptions();
@@ -67,14 +68,14 @@ public class MongoFactory {
 
 		if (seeds.size() > 1) {
 			if (options == null)
-				mongo = new Mongo(seeds);
+				mongo = new MongoClient(seeds);
 			else
-				mongo = new Mongo(seeds, options);
+				mongo = new MongoClient(seeds, options);
 		} else {
 			if (options == null)
-				mongo = new Mongo(seeds.get(0));
+				mongo = new MongoClient(seeds.get(0));
 			else
-				mongo = new Mongo(seeds.get(0), options);
+				mongo = new MongoClient(seeds.get(0), options);
 		}
 
 		return mongo;
@@ -113,18 +114,14 @@ public class MongoFactory {
 
 	}
 
-	private MongoOptions initMongoOptions() {
+	private MongoClientOptions initMongoOptions() {
 
-		MongoOptions options = new MongoOptions();
-
-		options.setConnectionsPerHost(config.getIntProperty("mongo.options.connectionsPerHost", 10));
-
-		options.setThreadsAllowedToBlockForConnectionMultiplier(config.getIntProperty(
-				"mongo.options.threadsAllowedToBlockForConnectionMultiplier", 5));
-
-		options.setConnectTimeout(config.getIntProperty("mongo.options.connectTimeout", 10000));
-
-		options.setSocketTimeout(config.getIntProperty("mongo.options.socketTimeout", 0));
+		MongoClientOptions.Builder builder = new MongoClientOptions.Builder()
+				.connectionsPerHost(config.getIntProperty("mongo.options.connectionsPerHost", 10))
+				.threadsAllowedToBlockForConnectionMultiplier(
+						config.getIntProperty("mongo.options.threadsAllowedToBlockForConnectionMultiplier", 5))
+				.connectTimeout(config.getIntProperty("mongo.options.connectTimeout", 10000))
+				.socketTimeout(config.getIntProperty("mongo.options.socketTimeout", 0));
 
 		/**
 		 * By default, all read and write operations will be made on the
@@ -132,16 +129,10 @@ public class MongoFactory {
 		 * read preference:
 		 **/
 		if (config.getBooleanProperty("mongo.options.readReference.secondary", false)) {
-			options.setReadPreference(ReadPreference.secondary());
+			builder.readPreference(ReadPreference.secondaryPreferred());
 		}
 
-		/**
-		 * By default, write operations will not throw exceptions on failure,
-		 * but that is easily changed too:
-		 */
-		options.setSafe(config.getBooleanProperty("mongo.options.safe", false));
-
-		return options;
+		return builder.build();
 
 	}
 

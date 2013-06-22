@@ -1,31 +1,30 @@
 package com.aug3.storage.mongoclient;
 
 import java.lang.reflect.Array;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-
 import com.mongodb.BasicDBObject;
+import com.mongodb.CommandResult;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
+import com.mongodb.WriteResult;
 
 public class MongoUtils {
-
+	
 	public static synchronized List<Long> nextval(DB db, String name, int count) {
 		List<Long> result = new ArrayList<Long>();
 		try {
 			DBCollection collection = db.getCollection("ids");
 			BasicDBObject query = new BasicDBObject("name", name);
 			DBObject oldValueObj = collection.findOne(query);
-			long oldValue = oldValueObj == null ? 1 : Long.valueOf(oldValueObj.get("value").toString());
+			long oldValue = oldValueObj == null ? 1 : Long.valueOf(oldValueObj.get("value").toString().replace(".0", ""));
 			BasicDBObject update = new BasicDBObject("$inc", new BasicDBObject("value", (long) count));
 			long newValue = Long.valueOf(collection.findAndModify(query, null, null, false, update, true, true)
-					.get("value").toString());
+					.get("value").toString().replace(".0", ""));
 
 			for (long i = oldValue == 1 ? 1 : oldValue + 1; i <= newValue; i++) {
 				result.add(i);
@@ -42,7 +41,7 @@ public class MongoUtils {
 			BasicDBObject query = new BasicDBObject("name", name);
 			BasicDBObject update = new BasicDBObject("$inc", new BasicDBObject("value", 1l));
 			return Long.valueOf(db.getCollection("ids").findAndModify(query, null, null, false, update, true, true)
-					.get("value").toString());
+					.get("value").toString().replace(".0", ""));
 		} catch (MongoException e) {
 			e.printStackTrace();
 		}
@@ -84,15 +83,15 @@ public class MongoUtils {
 			throw new IllegalArgumentException("Unknown operator '" + operator + "'");
 	}
 
-	public static void put(DBCollection collection, LinkedHashMap<String, Object> map) throws UnknownHostException,
-			MongoException {
+	public static void insert(DBCollection collection, LinkedHashMap<String, Object> map) throws MongoException {
 
-		BasicDBObject doc = new BasicDBObject();
+		DBObject dbObj = new BasicDBObject(map);
+		collection.insert(dbObj);
+	}
 
-		Set<Map.Entry<String, Object>> set = map.entrySet();
-		for (Map.Entry<String, Object> entry : set) {
-			doc.put(entry.getKey(), entry.getValue());
-		}
+	public static void save(DBCollection collection, LinkedHashMap<String, Object> map) throws MongoException {
+
+		BasicDBObject doc = new BasicDBObject(map);
 
 		collection.save(doc);
 	}
@@ -191,4 +190,35 @@ public class MongoUtils {
 		}
 		return (String[]) result;
 	}
+	
+	/**
+	 * 初始化 ids中 给定table的自增id, 
+     * 成功返回最终更新的条数
+     * 失败返回 -1
+     * 
+	 * @param db
+	 * @param name 欲初始化的id的表名
+	 * @param initialValue 
+	 * @return 
+	 */
+	public static int initialID(DB db, String name, long initialValue){
+		int updated = 0;
+	   	try {
+	   		 DBCollection coll = db.getCollection("ids");
+	   		 BasicDBObject query = new BasicDBObject("name", name);
+	   		 BasicDBObject update = new BasicDBObject("$set", new BasicDBObject("value", initialValue));
+	   		 WriteResult wresult = coll.update(query, update,true,false);
+	   		 CommandResult commandResult = wresult.getLastError();
+	   		 if(commandResult.getLong("n") > 0 && commandResult.getDouble("ok") == 1.0 && commandResult.get("err") == null){
+	   			 updated = commandResult.getInt("n");
+	   		 }else{
+	   			 updated = -1;
+	   		 }
+	   	 } catch(MongoException e){
+	   		 e.printStackTrace();
+	   		 updated = -1;
+	   	 }
+	   	return updated;
+	}
+
 }
