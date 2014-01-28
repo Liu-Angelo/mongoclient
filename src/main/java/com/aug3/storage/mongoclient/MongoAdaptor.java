@@ -7,8 +7,13 @@ import com.mongodb.Mongo;
 
 public class MongoAdaptor {
 
+	/**
+	 * A database connection with internal connection pooling. For most
+	 * applications, you should have one Mongo instance for the entire JVM.
+	 */
 	private static Mongo mongo = null;
 	private static MongoConfig config = new MongoConfig();
+	private static String dbName = config.getProperty("mongo.db.name", "ada");
 
 	/**
 	 * Creates a Mongo based on a list of replica set members or a list of
@@ -22,7 +27,6 @@ public class MongoAdaptor {
 	 * @throws BadConfigException
 	 */
 	public synchronized static Mongo newMongoInstance() {
-
 		if (mongo == null) {
 			mongo = new MongoFactory().newMongoInstance();
 		}
@@ -33,23 +37,18 @@ public class MongoAdaptor {
 
 	public static DB getDB(String dbname) {
 
-		if (mongo == null) {
-			newMongoInstance();
-		}
-
-		return mongo.getDB(dbname);
+		return newMongoInstance().getDB(dbname);
 
 	}
 
 	public static DB getDB() {
 
-		if (mongo == null) {
-			newMongoInstance();
-		}
+		return getDB(dbName);
 
-		String dbName = config.getProperty("mongo.db.name", "ada");
-		return mongo.getDB(dbName);
+	}
 
+	public static String getDefaultDBName() {
+		return dbName;
 	}
 
 	/**

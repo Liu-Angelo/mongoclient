@@ -125,6 +125,19 @@ public class MongoUtils {
 	}
 
 	/**
+	 * return filed value as String
+	 * use getObjectByFieldNameChain if value is not String type
+	 */
+    public static String getStringByFieldNameChain(DBObject obj, String filedNameChain) {
+        Object returnObj = getObjectByFieldNameChain(obj, filedNameChain);
+        if (returnObj != null) {
+            return returnObj.toString();
+        } else {
+            return null;
+        }
+    }
+	   
+	/**
 	 * get value according to fied name as name.szh
 	 * 
 	 * @param obj
