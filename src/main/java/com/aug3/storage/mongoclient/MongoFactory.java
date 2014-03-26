@@ -117,6 +117,9 @@ public class MongoFactory {
 	private MongoClientOptions initMongoOptions() {
 
 		MongoClientOptions.Builder builder = new MongoClientOptions.Builder()
+				.socketKeepAlive(true)
+				.autoConnectRetry(true)
+				.cursorFinalizerEnabled(true)
 				.connectionsPerHost(config.getIntProperty("mongo.options.connectionsPerHost", 10))
 				.threadsAllowedToBlockForConnectionMultiplier(
 						config.getIntProperty("mongo.options.threadsAllowedToBlockForConnectionMultiplier", 5))
